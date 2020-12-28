@@ -1,9 +1,15 @@
+/**
+ * データベースマイグレーション
+ * ・DBスキーマ作成と、サンプルデータ登録
+ * ・[$ node migration.js] で先に実行しておく
+ */
 import { sequelize, Restaurant, Review, User} from "./model.js";
 import * as data from "./sample-data.js"
 
-
+// 定義したmodelとDBを同期する
 await sequelize.sync({ force: true });
 
+// 作成したテーブルにデータを登録する(jsonの配列分登録)
 for( const{name, image, map } of data.restaurants ){
     await Restaurant.create({ name, image, map });
 }

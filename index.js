@@ -1,15 +1,27 @@
+/**
+ * REST用エンドポイント定義(express)
+ * ・オリジン間リソース共有 (Cross-Origin Resource Sharing) を利用
+ * ・認証用にjwt(Json Web Token)を利用
+ *  ■ 課題・・・express-routerを使ってエンドポイント定義を別クラスに移動する
+ */
 import express from "express";
 import cors from "cors";
-import * as data from "./sample-data.js";
+//import * as data from "./sample-data.js";
 import sequelize from "sequelize";
 import { Restaurant, Review, User } from "./model.js"
 import { checkJwt, getUser } from "./auth0.js"
 
-
+// express 初期化
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+// /restaurantsエンドポイント
+// ・レストランの一覧と全件数(ページング用)を返す
+// ・querystringで取得する件数(limit)と先頭から？件目(offset)を指定できる(ページング用)
+// ・レストランは、レビュー数の降順に返す
+//
 app.get("/restaurants", async(req, res) =>{
     const limit = +req.query.limit || 5;
     const offset = +req.query.offset || 0;
@@ -38,6 +50,8 @@ app.get("/restaurants", async(req, res) =>{
     res.json(restaurants);
 });
 
+// パラメータで指定されたidのレストランを返す
+// ・存在しない場合は、status code 404を返す
 app.get("/restaurants/:restaurantId", async(req, res) =>{
     const restaurantId = +req.params.restaurantId;
     // const restaurant = data.restaurants.find(
@@ -52,7 +66,8 @@ app.get("/restaurants/:restaurantId", async(req, res) =>{
     res.json(restaurant);
 });
 
-
+// 指定されたレストランのレビュー一覧を返す
+// ・レビューと一緒に、Userも返す(リレーションで紐づけ(Review.belongsTo(User))されている)
 app.get("/restaurants/:restaurantId/reviews", async (req, res) => {
     const restaurantId = +req.params.restaurantId;
     const limit = +req.query.limit || 5;
@@ -80,7 +95,10 @@ app.get("/restaurants/:restaurantId/reviews", async (req, res) => {
     res.json( reviews );
 });
 
-app.post("/restaurants/:restaurantId/reviews", checkJwt,async  (req, rest) => {
+// [POSTメソッド] レビューを投稿する
+// ・先に認証チェック？ユーザが存在しない場合はUserテーブルに登録する
+// ・
+app.post("/restaurants/:restaurantId/reviews", checkJwt, async  (req, rest) => {
     const auth0User = await getUser(req.get("Authorization"));
     const [user, created] = await user.findOrCreate({
         where: { sub: auth0User.sub },
@@ -101,6 +119,7 @@ app.post("/restaurants/:restaurantId/reviews", checkJwt,async  (req, rest) => {
         return;
     }
 
+    // 画面からpostされたタイトルとコメントでレビューを登録する
     const record = {
         title: req.body.title,
         comment: req.body.comment,
@@ -117,6 +136,7 @@ app.post("/restaurants/:restaurantId/reviews", checkJwt,async  (req, rest) => {
       res.json(review);
 });
 
+// ポート5000番で待ち受け
 const port = process.env.PORT || 5000;
 app.listen(port , () =>{
     console.log(`Listening at http://localhost:${port}`);
