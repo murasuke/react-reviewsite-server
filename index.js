@@ -8,8 +8,11 @@ import express from "express";
 import cors from "cors";
 //import * as data from "./sample-data.js";
 import sequelize from "sequelize";
-import { Restaurant, Review, User } from "./model.js"
+//import { Restaurant, Review, User } from "./model.js"
+import * as dbmdl from "./models/index.cjs";
 import { checkJwt, getUser } from "./auth0.js"
+
+const db = dbmdl.default;
 
 // express 初期化
 const app = express();
@@ -31,18 +34,18 @@ app.get("/restaurants", async(req, res) =>{
     //     count: data.restaurants.length,
     // });
   
-    const restaurants = await Restaurant.findAndCountAll({
+    const restaurants = await db.Restaurant.findAndCountAll({
         attributes: {
             include: [
                 [
                     sequelize.literal(
-                        `(SELECT COUNT(*) FROM reviews AS r WHERE r.restaurant_id = restaurant.id)`,
+                        `(SELECT COUNT(*) FROM Reviews AS r WHERE r.restaurantId = Restaurant.id)`,
                     ),
                     "review_count",
                 ],
             ],
         },
-        include: { model: Review, limit: 3, include: { model: User } },
+        include: { model: db.Review, limit: 3, include: { model: db.User } },
         order: [[sequelize.literal("review_count"), "DESC"]],
         limit,
         offset,
@@ -57,7 +60,7 @@ app.get("/restaurants/:restaurantId", async(req, res) =>{
     // const restaurant = data.restaurants.find(
     //     restaurant => restaurant.id === restaurantId
     // );
-    const restaurant = await Restaurant.findByPk(restaurantId);
+    const restaurant = await  db.Restaurant.findByPk(restaurantId);
 
     if(!restaurant){
         res.status(404).send("not found");
@@ -73,7 +76,7 @@ app.get("/restaurants/:restaurantId/reviews", async (req, res) => {
     const limit = +req.query.limit || 5;
     const offset = +req.query.offset || 0;
     // const restaurant = data.restaurants.find( r => r.id === restaurantId);
-    const restaurant = await Restaurant.findByPk(restaurantId);
+    const restaurant = await db.Restaurant.findByPk(restaurantId);
 
     if(!restaurant){
         res.status(404).send("not found");
@@ -86,9 +89,10 @@ app.get("/restaurants/:restaurantId/reviews", async (req, res) => {
     //     rows: reviews.slice(offset, offset + limit),
     // });
     
-    const reviews = await Review.findAndCountAll({
-        include: {model: User},
-        where: {restaurantId },
+    const reviews = await db.Review.findAndCountAll({
+        include: {model: db.User},
+        // where: {restaurantId },
+        where: { restaurantId },
         limit,
         offset,
     });
@@ -113,7 +117,7 @@ app.post("/restaurants/:restaurantId/reviews", checkJwt, async  (req, rest) => {
     }
 
     const restaurantId = +req.params.restaurantId;
-    const restaurant = await Restaurant.findByPk(restaurantId);
+    const restaurant = await db.Restaurant.findByPk(restaurantId);
     if( !restaurant ){
         res.status(404).send("not found");
         return;
@@ -132,7 +136,7 @@ app.post("/restaurants/:restaurantId/reviews", checkJwt, async  (req, rest) => {
         return;
       }
     
-      const review = await Review.create(record);
+      const review = await db.Review.create(record);
       res.json(review);
 });
 

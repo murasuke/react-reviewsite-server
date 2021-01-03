@@ -10,7 +10,7 @@ import * as data from "./sample-data.js"
 await sequelize.sync({ force: true });
 
 // 作成したテーブルにデータを登録する(jsonの配列分登録)
-for( const{name, image, map } of data.restaurants ){
+for( const{ name, image, map } of data.restaurants ){
     await Restaurant.create({ name, image, map });
 }
 

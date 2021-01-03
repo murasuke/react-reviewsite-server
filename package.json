@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "engines": {
     "node": "14.15.1"
   },
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
@@ -22,5 +22,7 @@
     "sequelize": "^6.3.5",
     "sqlite3": "^5.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "sequelize-cli": "^6.2.0"
+  }
 }
